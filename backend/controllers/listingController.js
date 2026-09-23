@@ -1,5 +1,7 @@
 const Listing = require('../models/Listing');
 const { ok, fail, paged } = require('../utils/response');
+const { uploadImages } = require('../utils/supabaseUpload');
+const { uploadImages } = require('../utils/supabaseUpload');
 
 exports.getAll = async (req,res,next) => {
   try {
@@ -25,7 +27,7 @@ exports.getOne = async (req,res,next) => {
 
 exports.create = async (req,res,next) => {
   try {
-    const images = req.files ? req.files.map(f=>`/uploads/${f.filename}`) : [];
+    const images = req.files?.length ? await uploadImages(req.files) : [];
     const listing = await Listing.create({ ...req.body, vendor:req.user._id, images });
     req.io?.to(`zone_${listing.zone}`).emit('new_listing', listing);
     ok(res,{ listing },'Listing created',201);
