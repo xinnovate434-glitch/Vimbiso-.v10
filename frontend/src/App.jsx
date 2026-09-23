@@ -578,76 +578,96 @@ const BuyerDash = ({user,tab,setTab,push}) => {
 
   if(tab==="home") return (
     <TabWrap bg={BG.buyer}>
-      <div style={{background:"linear-gradient(180deg,rgba(15,76,117,.97) 0%,rgba(27,154,170,.88) 100%)",padding:"28px 18px 16px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+      <div style={{background:"linear-gradient(180deg,#0B1210 0%,#0F1B17 100%)",padding:"26px 18px 20px",borderBottomLeftRadius:28,borderBottomRightRadius:28}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18}}>
           <div>
-            <div style={{color:"rgba(255,255,255,.7)",fontSize:12,letterSpacing:1}}>GOOD MORNING 🌅</div>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,color:"#fff"}}>{user.name}</div>
-            <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}}>📍 {user.location}</div>
+            <div style={{color:"rgba(255,255,255,.5)",fontSize:11,letterSpacing:1}}>GOOD MORNING</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:24,fontWeight:700,color:"#fff",marginTop:2}}>What do you need?</div>
           </div>
-          <div style={{width:46,height:46,borderRadius:14,background:R.accent,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:20,color:"#fff"}}>{user.name[0]}</div>
+          <div style={{display:"flex",gap:10,alignItems:"center"}}>
+            <div style={{width:38,height:38,borderRadius:12,background:"rgba(255,255,255,.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🔔</div>
+            <div style={{width:38,height:38,borderRadius:12,background:R.grad,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:15,color:"#fff"}}>{user.name[0]}</div>
+          </div>
         </div>
-        <div style={{display:"flex",background:"rgba(255,255,255,.15)",backdropFilter:"blur(12px)",borderRadius:14,padding:"10px 14px",alignItems:"center",gap:8,border:"1px solid rgba(255,255,255,.22)"}}>
-          <span style={{fontSize:16}}>🔍</span>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search market — tomatoes, oil…"
-            style={{flex:1,background:"none",border:"none",outline:"none",fontSize:14,color:"#fff",fontFamily:"'Cabinet Grotesk',sans-serif"}}/>
-          {search&&<span onClick={()=>setSearch("")} style={{color:"rgba(255,255,255,.6)",cursor:"pointer",fontSize:16}}>✕</span>}
+
+        <div style={{background:"#111C18",borderRadius:18,padding:14,border:"1px solid rgba(255,255,255,.08)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 4px",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
+            <span style={{width:8,height:8,borderRadius:99,background:"#34D399",flexShrink:0}}/>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search market — tomatoes, oil…"
+              style={{flex:1,background:"none",border:"none",outline:"none",fontSize:14,color:"#fff",fontFamily:"'Cabinet Grotesk',sans-serif"}}/>
+            {search&&<span onClick={()=>setSearch("")} style={{color:"rgba(255,255,255,.5)",cursor:"pointer",fontSize:14}}>✕</span>}
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 4px"}}>
+            <span style={{width:8,height:8,borderRadius:2,background:"rgba(255,255,255,.35)",flexShrink:0}}/>
+            <div style={{fontSize:13,color:"rgba(255,255,255,.45)"}}>📍 {user.location}</div>
+          </div>
         </div>
-      </div>
-      <div style={{padding:"14px 16px"}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:14}}>
-          {[["$24.80","💳","Wallet"],["3","📦","Orders"],["$6.20","💰","Saved"]].map(([v,ic,l])=>(
-            <Glass key={l} style={{padding:"12px 8px",textAlign:"center"}}>
-              <div style={{fontSize:18,marginBottom:3}}>{ic}</div>
-              <div style={{fontWeight:900,fontSize:16,color:R.primary}}>{v}</div>
-              <div style={{fontSize:10,color:R.muted}}>{l}</div>
-            </Glass>
+
+        <div style={{display:"flex",gap:10,marginTop:14}}>
+          {[["home","🛒","Buy"],["orders","📦","Orders"],["market","🏬","Market"]].map(([k,ic,l])=>(
+            <div key={k} onClick={()=>setTab(k)} style={{flex:1,textAlign:"center",padding:"10px 4px",borderRadius:14,background:tab===k?"#1B2C25":"rgba(255,255,255,.05)",border:tab===k?"1px solid #34D39955":"1px solid transparent",cursor:"pointer"}}>
+              <div style={{fontSize:16}}>{ic}</div>
+              <div style={{fontSize:11,color:tab===k?"#34D399":"rgba(255,255,255,.5)",fontWeight:700,marginTop:2}}>{l}</div>
+            </div>
           ))}
         </div>
-        <Glass style={{overflow:"hidden",height:40,display:"flex",alignItems:"center",marginBottom:14}}>
-          <div style={{padding:"0 10px",color:R.accent,fontSize:10,fontWeight:700,whiteSpace:"nowrap",borderRight:"1px solid #E2E8F0",flexShrink:0}}>LIVE PRICES</div>
+      </div>
+
+      <div style={{padding:"16px 16px 0",display:"flex",gap:10,marginTop:2}}>
+        {[["$24.80","💳","Wallet"],["3","📦","Orders"],["$6.20","💰","Saved"]].map(([v,ic,l])=>(
+          <div key={l} style={{flex:1,background:"#101B17",borderRadius:14,padding:"10px 8px",textAlign:"center",border:"1px solid rgba(255,255,255,.06)"}}>
+            <div style={{fontSize:15}}>{ic}</div>
+            <div style={{fontWeight:900,fontSize:14,color:"#fff",marginTop:2}}>{v}</div>
+            <div style={{fontSize:9,color:"rgba(255,255,255,.4)"}}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{padding:16}}>
+        <Glass style={{overflow:"hidden",height:38,display:"flex",alignItems:"center",marginBottom:16,background:"#101B17",border:"1px solid rgba(255,255,255,.06)"}}>
+          <div style={{padding:"0 10px",color:"#34D399",fontSize:10,fontWeight:700,whiteSpace:"nowrap",borderRight:"1px solid rgba(255,255,255,.1)",flexShrink:0}}>LIVE PRICES</div>
           <div style={{flex:1,overflow:"hidden"}}>
             <div style={{display:"flex",gap:24,padding:"0 16px",animation:"ticker 18s linear infinite",whiteSpace:"nowrap",width:"max-content"}}>
               {["🍅 Tomatoes $1.20/kg ↑","🫙 Oil $2.10/L →","🥬 Cabbage $0.80/kg ↓","🌽 Maize $0.85/kg ↑","🍌 Banana $0.60/kg ↑","🍅 Tomatoes $1.20/kg ↑","🫙 Oil $2.10/L →","🥬 Cabbage $0.80/kg ↓","🌽 Maize $0.85/kg ↑","🍌 Banana $0.60/kg ↑"].map((t,i)=>(
-                <span key={i} style={{fontSize:12,color:R.text,fontWeight:500}}>{t}</span>
+                <span key={i} style={{fontSize:12,color:"rgba(255,255,255,.75)",fontWeight:500}}>{t}</span>
               ))}
             </div>
           </div>
         </Glass>
+
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
           <div style={{fontWeight:800,fontSize:12,color:"#fff",letterSpacing:.5}}>YOUR ORDERS</div>
-          <span onClick={()=>setTab("orders")} style={{fontSize:12,color:R.accent,fontWeight:700,cursor:"pointer",background:"rgba(255,255,255,.15)",borderRadius:10,padding:"3px 10px"}}>All →</span>
+          <span onClick={()=>setTab("orders")} style={{fontSize:12,color:"#34D399",fontWeight:700,cursor:"pointer",background:"rgba(52,211,153,.12)",borderRadius:10,padding:"3px 10px"}}>All →</span>
         </div>
         {DB.orders.slice(0,2).map(o=>(
-          <Glass key={o.id} style={{marginBottom:10,padding:14}}>
+          <div key={o.id} style={{marginBottom:10,padding:14,background:"#101B17",borderRadius:16,border:"1px solid rgba(255,255,255,.06)"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div>
-                <div style={{fontWeight:700,fontSize:14,color:R.text}}>{o.product}</div>
-                <div style={{fontSize:11,color:R.muted,marginTop:1}}>{o.qty}kg · {money(o.total)} · {o.agent||"Awaiting rider"}</div>
+                <div style={{fontWeight:700,fontSize:14,color:"#fff"}}>{o.product}</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginTop:1}}>{o.qty}kg · {money(o.total)} · {o.agent||"Awaiting rider"}</div>
               </div>
               <Pill bg={statusColor[o.status]+"22"} color={statusColor[o.status]}>{o.status.replace("_"," ")}</Pill>
             </div>
-            {o.status==="in_transit"&&<button onClick={()=>setEscrow(o)} style={{marginTop:10,width:"100%",padding:"9px",borderRadius:10,background:R.grad,color:"#fff",fontWeight:700,border:"none",cursor:"pointer",fontSize:12}}>✅ Confirm & Release Payment</button>}
-          </Glass>
+            {o.status==="in_transit"&&<button onClick={()=>setEscrow(o)} style={{marginTop:10,width:"100%",padding:"9px",borderRadius:10,background:"linear-gradient(135deg,#22C55E,#16A34A)",color:"#fff",fontWeight:700,border:"none",cursor:"pointer",fontSize:12}}>✅ Confirm & Release Payment</button>}
+          </div>
         ))}
-        <div style={{fontWeight:800,fontSize:12,color:"#fff",letterSpacing:.5,marginBottom:10}}>{search?`RESULTS FOR "${search.toUpperCase()}"` : "NEAR YOU"}</div>
+
+        <div style={{fontWeight:800,fontSize:12,color:"#fff",letterSpacing:.5,marginBottom:10,marginTop:4}}>{search?`RESULTS FOR "${search.toUpperCase()}"` : "BEST OFFERS NEAR YOU"}</div>
         {listings.map(l=>(
-          <Glass key={l.id} style={{marginBottom:10,padding:0,overflow:"hidden"}}>
-            <div style={{display:"flex"}}>
-              <img src={l.img} style={{width:85,height:85,objectFit:"cover",flexShrink:0}} onError={e=>e.target.style.display="none"}/>
-              <div style={{flex:1,padding:"10px 12px"}}>
-                <div style={{display:"flex",justifyContent:"space-between"}}>
-                  <div style={{fontWeight:700,fontSize:14,color:R.text}}>{l.product}</div>
-                  <Pill bg="#E8F4F8" color={R.primary}>{l.cat}</Pill>
-                </div>
-                <div style={{fontSize:11,color:R.muted,marginTop:2}}>📍 {l.loc} · {l.qty}{l.unit}</div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
-                  <div style={{fontWeight:900,fontSize:17,color:R.primary}}>{money(l.price)}/{l.unit}</div>
-                  <button onClick={()=>setEscrow({...l,qty:1})} style={{background:R.grad,color:"#fff",border:"none",borderRadius:20,padding:"6px 16px",fontSize:12,fontWeight:700,cursor:"pointer"}}>BUY</button>
-                </div>
+          <div key={l.id} style={{marginBottom:10,padding:12,background:"#101B17",borderRadius:16,border:"1px solid rgba(255,255,255,.06)",display:"flex",gap:12,alignItems:"center"}}>
+            <img src={l.img} style={{width:56,height:56,borderRadius:14,objectFit:"cover",flexShrink:0,background:"#1B2C25"}} onError={e=>e.target.style.display="none"}/>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{fontWeight:700,fontSize:14,color:"#fff"}}>{l.product}</div>
+                <span style={{fontSize:11,color:"#FBBF24"}}>★ {l.rating||"4.8"}</span>
               </div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginTop:2}}>📍 {l.loc} · {l.qty}{l.unit}</div>
             </div>
-          </Glass>
+            <div style={{textAlign:"right",flexShrink:0}}>
+              <div style={{fontWeight:900,fontSize:15,color:"#34D399"}}>{money(l.price)}</div>
+              <button onClick={()=>setEscrow({...l,qty:1})} style={{marginTop:4,background:"linear-gradient(135deg,#22C55E,#16A34A)",color:"#fff",border:"none",borderRadius:12,padding:"6px 14px",fontSize:11,fontWeight:700,cursor:"pointer"}}>Buy</button>
+            </div>
+          </div>
         ))}
       </div>
       {escrow&&<EscrowModal item={escrow} role="buyer" onClose={()=>setEscrow(null)}/>}
