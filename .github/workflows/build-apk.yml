@@ -42,6 +42,8 @@ jobs:
       - name: Add Android platform
         working-directory: frontend
         run: |
+          npm install @capacitor/core@5 @capacitor/android@5 --no-save --legacy-peer-deps
+          ls node_modules/@capacitor
           rm -rf android
           npx --yes --package=@capacitor/cli@5 cap add android
 
