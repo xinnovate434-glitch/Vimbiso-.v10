@@ -913,7 +913,17 @@ const VendorDash = ({user,tab,setTab,push}) => {
 const FarmerDash = ({user,tab,push}) => {
   const R=ROLES.farmer;
   const [selCrop,setSelCrop]=useState(null);
-  const weather={temp:24,cond:"Partly Cloudy",hum:72,rain:"20%",wind:"12km/h NE",uv:"High",note:"Good day for foliar fertilizers. Complete before 10am due to high UV."};
+  const [forecast,setForecast]=useState(null);
+  useEffect(()=>{
+    api(`/weather?zone=${encodeURIComponent(user.zone||user.location||"Harare")}`)
+      .then(json=>setForecast(json.data.forecast))
+      .catch(()=>setForecast(null));
+  },[]);
+  const weather = forecast && !forecast.unavailable ? {
+    temp:forecast.current.temp, cond:forecast.current.condition, hum:forecast.current.humidity,
+    rain:forecast.current.rainChance, wind:forecast.current.windSpeed, uv:forecast.current.uvIndex,
+    note:forecast.advisory,
+  } : { temp:"--", cond:forecast?.message||"Loading…", hum:"--", rain:"--", wind:"--", uv:"--", note:forecast?.message||"Fetching live weather…" };
   const crops=[{n:"Tomatoes",stage:"Flowering",health:88,days:45,harvest:"~Apr 30",planted:"Mar 10",icon:"🍅"},{n:"Maize",stage:"Vegetative",health:92,days:60,harvest:"~May 15",planted:"Feb 22",icon:"🌽"},{n:"Cabbage",stage:"Seedling",health:78,days:30,harvest:"~Jun 10",planted:"Mar 28",icon:"🥬"}];
   const alerts=[{c:"#EF4444",i:"🐛",t:"Aphid Alert",b:"Activity reported in Mazowe. Apply neem oil immediately."},{c:"#10B981",i:"📈",t:"Tomato Prices Up +15%",b:"Market peak in Harare — excellent time to sell!"},{c:"#3B82F6",i:"🌧",t:"Rain Expected Thursday",b:"Light rain — delay scheduled irrigation."}];
   const prices=[{c:"🍅",n:"Tomatoes",p:1.20,tr:"↑ +8%",tc:"#10B981"},{c:"🌽",n:"Maize",p:0.85,tr:"→",tc:"#6B7280"},{c:"🥬",n:"Cabbage",p:0.80,tr:"↓ -3%",tc:"#EF4444"},{c:"🍌",n:"Banana",p:0.60,tr:"↑ +4%",tc:"#10B981"}];
@@ -1012,25 +1022,28 @@ const FarmerDash = ({user,tab,push}) => {
       <div style={{padding:16}}>
         <Glass style={{padding:14,marginBottom:14}}>
           <div style={{fontWeight:700,marginBottom:12}}>5-Day Forecast</div>
-          {[{d:"Today",i:"⛅",h:26,l:18,r:"20%"},{d:"Thu",i:"🌧",h:22,l:16,r:"75%"},{d:"Fri",i:"🌤",h:25,l:17,r:"10%"},{d:"Sat",i:"☀",h:28,l:18,r:"5%"},{d:"Sun",i:"☀",h:29,l:19,r:"5%"}].map(d=>(
-            <div key={d.d} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid #F0F0F0",alignItems:"center"}}>
-              <span style={{width:40,fontSize:12,color:R.muted}}>{d.d}</span>
-              <span style={{fontSize:22}}>{d.i}</span>
-              <span style={{fontSize:12,color:R.muted}}>💧 {d.r}</span>
-              <span style={{fontSize:13,fontWeight:700,color:R.primary}}>{d.h}° / {d.l}°</span>
+          {(forecast?.days?.length ? forecast.days : []).map(d=>(
+            <div key={d.day} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid #F0F0F0",alignItems:"center"}}>
+              <span style={{width:40,fontSize:12,color:R.muted}}>{d.day}</span>
+              <span style={{fontSize:22}}>{d.icon}</span>
+              <span style={{fontSize:12,color:R.muted}}>💧 {d.rain}</span>
+              <span style={{fontSize:13,fontWeight:700,color:R.primary}}>{d.high}° / {d.low}°</span>
             </div>
           ))}
+          {!forecast?.days?.length && <div style={{fontSize:12,color:R.muted,padding:"8px 0"}}>{forecast?.message || "Loading forecast…"}</div>}
         </Glass>
         <div style={{fontWeight:700,fontSize:12,color:"#fff",marginBottom:10}}>PEST & DISEASE ALERTS</div>
-        {[{i:"🐛",n:"Aphids",z:"Mazowe",sev:"Moderate",a:"Apply neem oil solution"},{i:"🦠",n:"Blight Risk",z:"Harare East",sev:"Low",a:"Monitor leaf colour"},{i:"🐝",n:"Pollinators Active",z:"Area-wide",sev:"Good",a:"No action — beneficial"}].map(p=>(
-          <div key={p.n} style={{background:p.sev==="Good"?"rgba(16,185,129,.15)":"rgba(239,68,68,.12)",backdropFilter:"blur(14px)",borderRadius:14,padding:"11px 14px",marginBottom:10,border:`1px solid ${p.sev==="Good"?"rgba(16,185,129,.35)":"rgba(239,68,68,.35)"}`}}>
+        {forecast?.pestAlerts?.length ? forecast.pestAlerts.map(p=>(
+          <div key={p.pest} style={{background:"rgba(239,68,68,.12)",backdropFilter:"blur(14px)",borderRadius:14,padding:"11px 14px",marginBottom:10,border:"1px solid rgba(239,68,68,.35)"}}>
             <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:3}}>
-              <span style={{fontSize:20}}>{p.i}</span>
-              <div style={{fontWeight:700,fontSize:13,color:"#fff"}}>{p.n} <Pill bg={p.sev==="Good"?"#DCFCE7":"#FEE2E2"} color={p.sev==="Good"?"#065F46":"#991B1B"}>{p.sev}</Pill></div>
+              <span style={{fontSize:20}}>🐛</span>
+              <div style={{fontWeight:700,fontSize:13,color:"#fff"}}>{p.pest} <Pill bg="#FEE2E2" color="#991B1B">{p.severity}</Pill></div>
             </div>
-            <div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>📍 {p.z} · 🔧 {p.a}</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.7)"}}>📍 {p.zone} · 🔧 {p.action}</div>
           </div>
-        ))}
+        )) : (
+          <div style={{background:"rgba(255,255,255,.08)",borderRadius:14,padding:"11px 14px",fontSize:12,color:"rgba(255,255,255,.6)"}}>No live pest/disease reports for your zone right now.</div>
+        )}
       </div>
     </TabWrap>
   );
@@ -1705,46 +1718,43 @@ const VoiceOrder = ({ onOrder, role }) => {
     return () => clearInterval(iv);
   }, [listening]);
 
-  const SHONA_SAMPLES = [
-    'Ndinoda tomato mashanu kilograms kubva kuna Chipo',
-    'Ndipa mafuta ekubika mabhokisi maviri Mbare Market',
-    'Ndinoda chibage flour makumi maviri kilograms',
-    'Ndipeiwo miriwo yakanaka kubva kumunda',
-  ];
-  const NDEBELE_SAMPLES = [
-    'Ngifuna amatamati amahanu ikhilogiramu',
-    'Ngipha amafutha okudla amabhokisi amabili',
-    'Ngifuna ufulawa wombila amashumi amabili',
-  ];
-
   const startListening = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      setTranscript('Voice recognition is not supported on this device.');
+      return;
+    }
     setListening(true);
     setTranscript('');
     setParsed(null);
     setDone(false);
-    // Simulate voice recognition with real-sounding delay
-    const samples = lang === 'sn' ? SHONA_SAMPLES : NDEBELE_SAMPLES;
-    const sample  = samples[Math.floor(Math.random() * samples.length)];
-    let i = 0;
-    const iv = setInterval(() => {
-      i++;
-      setTranscript(sample.slice(0, i * 3));
-      if (i * 3 >= sample.length) {
-        clearInterval(iv);
+    const rec = new SR();
+    rec.lang = 'en-US';
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.onresult = (e) => {
+      let text = '';
+      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+      setTranscript(text);
+      if (e.results[e.results.length - 1].isFinal) {
         setListening(false);
-        parseVoice(sample);
+        parseVoice(text);
       }
-    }, 60);
-    recRef.current = iv;
+    };
+    rec.onerror = () => { setListening(false); setTranscript('Could not hear you clearly — try again.'); };
+    rec.onend = () => setListening(false);
+    recRef.current = rec;
+    rec.start();
   };
 
   const stopListening = () => {
-    clearInterval(recRef.current);
+    if (recRef.current && recRef.current.stop) recRef.current.stop();
     setListening(false);
   };
 
   const parseVoice = (text) => {
-    // Mock NLP parse — in production use Claude API
+    // Simple keyword-based parse of the real transcript (works best in English;
+    // Shona/Ndebele product words are still matched if picked up phonetically)
     const products = { tomato:['tomato','amatamati'], maize:['chibage','umbila','maize'], oil:['mafuta','amafutha','oil'], cabbage:['miriwo','cabbage'] };
     let product = 'Tomatoes', qty = 5, unit = 'kg', vendor = 'Nearest seller';
     Object.entries(products).forEach(([k, words]) => {
