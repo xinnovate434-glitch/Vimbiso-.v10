@@ -326,6 +326,56 @@ const Splash = ({onDone}) => {
   );
 };
 
+// ── STABLE FORM COMPONENTS (hoisted so typing doesn't remount the input & lose the keyboard) ──
+const Inp = ({lbl,ph,value,onChange,type="text",max,icon,error}) => (
+  <div style={{marginBottom:14}}>
+    <label style={{fontSize:10,fontWeight:700,letterSpacing:1.5,color:"#475569",display:"block",marginBottom:5}}>{lbl}</label>
+    <div style={{position:"relative"}}>
+      {icon&&<span style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",fontSize:16,pointerEvents:"none"}}>{icon}</span>}
+      <input
+        type={type}
+        placeholder={ph}
+        maxLength={max}
+        value={value}
+        onChange={onChange}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        style={{
+          width:"100%",
+          border:`1.5px solid ${error?"#EF4444":"#E2E8F0"}`,
+          borderRadius:12,
+          padding:`12px 14px 12px ${icon?"42px":"14px"}`,
+          fontSize:16,
+          outline:"none",
+          background:error?"#FEF2F2":"#fff",
+          color:"#0F172A",
+          fontFamily:"'Cabinet Grotesk',sans-serif",
+          WebkitAppearance:"none",
+          appearance:"none",
+          touchAction:"manipulation",
+        }}
+      />
+    </div>
+    {error&&<div style={{color:"#EF4444",fontSize:11,marginTop:4}}>⚠ {error}</div>}
+  </div>
+);
+
+const AuthWrap = ({children,title,sub,bgSrc,onBack}) => (
+  <div style={{height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <PageBg src={bgSrc||BG.auth} overlay="rgba(2,6,4,.86)" style={{flexShrink:0,position:"relative"}}>
+      <div style={{padding:"26px 20px 22px"}}>
+        {onBack&&<button onClick={onBack} style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.22)",borderRadius:10,padding:"6px 12px",color:"#fff",fontSize:12,cursor:"pointer",marginBottom:12}}>← Back</button>}
+        <div style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,color:"#fff"}}>{title}</div>
+        {sub&&<div style={{color:"rgba(255,255,255,.65)",fontSize:12,marginTop:4}}>{sub}</div>}
+        <div style={{position:"absolute",right:20,bottom:14,opacity:.4}}><WaveBars n={7} color="#fff" h={22}/></div>
+      </div>
+    </PageBg>
+    <div style={{flex:1,overflowY:"auto",padding:"20px 20px 30px",background:"#F8FAFC"}}>{children}</div>
+  </div>
+);
+
 // ── AUTH PAGE ─────────────────────────────────────────────────────────
 const AuthPage = ({onAuth}) => {
   const [mode,setMode]=useState("land");
@@ -412,54 +462,7 @@ const AuthPage = ({onAuth}) => {
 
   const roles=[{k:"buyer",e:"🛍",l:"Buyer"},{k:"vendor",e:"🏪",l:"Vendor"},{k:"farmer",e:"🌾",l:"Farmer"},{k:"delivery",e:"🛵",l:"Delivery"},{k:"agent",e:"🤝",l:"Agent"}];
 
-  const Inp=({lbl,ph,value,onChange,type="text",max,icon,error})=>(
-    <div style={{marginBottom:14}}>
-      <label style={{fontSize:10,fontWeight:700,letterSpacing:1.5,color:"#475569",display:"block",marginBottom:5}}>{lbl}</label>
-      <div style={{position:"relative"}}>
-        {icon&&<span style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",fontSize:16,pointerEvents:"none"}}>{icon}</span>}
-        <input
-          type={type}
-          placeholder={ph}
-          maxLength={max}
-          value={value}
-          onChange={onChange}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          spellCheck={false}
-          style={{
-            width:"100%",
-            border:`1.5px solid ${error?"#EF4444":"#E2E8F0"}`,
-            borderRadius:12,
-            padding:`12px 14px 12px ${icon?"42px":"14px"}`,
-            fontSize:16,
-            outline:"none",
-            background:error?"#FEF2F2":"#fff",
-            color:"#0F172A",
-            fontFamily:"'Cabinet Grotesk',sans-serif",
-            WebkitAppearance:"none",
-            appearance:"none",
-            touchAction:"manipulation",
-          }}
-        />
-      </div>
-      {error&&<div style={{color:"#EF4444",fontSize:11,marginTop:4}}>⚠ {error}</div>}
-    </div>
-  )
 
-  const AuthWrap=({children,title,sub,bgSrc,back})=>(
-    <div style={{height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
-      <PageBg src={bgSrc||BG.auth} overlay="rgba(2,6,4,.86)" style={{flexShrink:0,position:"relative"}}>
-        <div style={{padding:"26px 20px 22px"}}>
-          {back&&<button onClick={()=>{setMode(back);clr();}} style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.22)",borderRadius:10,padding:"6px 12px",color:"#fff",fontSize:12,cursor:"pointer",marginBottom:12}}>← Back</button>}
-          <div style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,color:"#fff"}}>{title}</div>
-          {sub&&<div style={{color:"rgba(255,255,255,.65)",fontSize:12,marginTop:4}}>{sub}</div>}
-          <div style={{position:"absolute",right:20,bottom:14,opacity:.4}}><WaveBars n={7} color="#fff" h={22}/></div>
-        </div>
-      </PageBg>
-      <div style={{flex:1,overflowY:"auto",padding:"20px 20px 30px",background:"#F8FAFC"}}>{children}</div>
-    </div>
-  );
 
   if(mode==="land") return (
     <div style={{height:"100vh",overflow:"hidden"}}>
@@ -490,7 +493,7 @@ const AuthPage = ({onAuth}) => {
   );
 
   if(mode==="login") return (
-    <AuthWrap title="Welcome back" sub="Sign in with phone and PIN" bgSrc={IMG_MOBILE} back="land">
+    <AuthWrap title="Welcome back" sub="Sign in with phone and PIN" bgSrc={IMG_MOBILE} onBack={()=>{setMode("land");clr();}}>
       <div style={{background:"#ECFDF5",borderRadius:12,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#065F46",border:"1px solid #A7F3D0"}}>
         💡 Demo — Phone ends in 1-6 · PIN <strong>1234</strong><br/>
         <small>1=buyer 2=vendor 3=farmer 4=delivery 5=agent 6=admin</small>
@@ -504,7 +507,7 @@ const AuthPage = ({onAuth}) => {
   );
 
   if(mode==="signup") return (
-    <AuthWrap title="Create Account" sub="Join the Vimbiso Network" bgSrc={IMG_COINS} back="land">
+    <AuthWrap title="Create Account" sub="Join the Vimbiso Network" bgSrc={IMG_COINS} onBack={()=>{setMode("land");clr();}}>
       <Inp lbl="FULL NAME" ph="Your full name" icon="👤" value={f.name} onChange={e=>s('name',e.target.value)}/>
       <Inp lbl="PHONE" ph="+263 7X XXX XXXX" icon="📱" value={f.phone} onChange={e=>s('phone',e.target.value)}/>
       <Inp lbl="LOCATION" ph="e.g. Mbare, Harare" icon="📍" value={f.loc} onChange={e=>s('loc',e.target.value)}/>
@@ -543,7 +546,7 @@ const AuthPage = ({onAuth}) => {
   );
 
   if(mode==="link") return (
-    <AuthWrap title="Link Accounts" sub="Merge Google + Phone without duplicates" bgSrc={IMG_COINS} back="gfall">
+    <AuthWrap title="Link Accounts" sub="Merge Google + Phone without duplicates" bgSrc={IMG_COINS} onBack={()=>{setMode("gfall");clr();}}>
       <div style={{background:"#ECFDF5",borderRadius:12,padding:"10px 14px",marginBottom:14,fontSize:12,color:"#065F46",border:"1px solid #A7F3D0"}}>🔗 Linking <strong>{gUser?.email}</strong> to existing profile.</div>
       <Inp lbl="YOUR PHONE" ph="+263 7X XXX XXXX" icon="📱" value={f.phone} onChange={e=>s('phone',e.target.value)}/>
       <Inp lbl="YOUR PIN" ph="Existing PIN" type="password" max={6} icon="🔒" value={f.pin} onChange={e=>s('pin',e.target.value)}/>
@@ -1595,12 +1598,22 @@ const ProfilePage = ({user,onLogout}) => {
           <div style={{width:78,height:78,borderRadius:24,background:R.grad,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:32,color:"#fff",margin:"0 auto 12px",border:"3px solid rgba(255,255,255,.3)",boxShadow:`0 0 40px ${R.accent}55`}}>{user.name[0]}</div>
           <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:700,color:"#fff"}}>{user.name}</div>
           <div style={{color:"rgba(255,255,255,.6)",fontSize:12,marginTop:3}}>{ROLES[user.role]?.name||user.role} · {user.location}</div>
-          <Pill bg="rgba(255,255,255,.15)" color="#fff" style={{marginTop:8}}>Trust Score: {user.trust}</Pill>
+          <Pill bg="rgba(255,255,255,.15)" color="#fff" style={{marginTop:8}}>Trust Score: {user.trustScore ?? 50}</Pill>
           <div style={{position:"absolute",right:18,bottom:14,opacity:.4}}><WaveBars n={6} color="rgba(255,255,255,.5)" h={18}/></div>
         </div>
         <div style={{padding:16}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:14}}>
-            {[["143","Trans."],["4.8★","Rating"],["3 mo","Member"]].map(([v,l])=>(
+            {[
+              [String(user.totalTransactions ?? 0),"Trans."],
+              [user.avgRating ? `${user.avgRating}★` : "New","Rating"],
+              [(() => {
+                if(!user.createdAt) return "New";
+                const days = Math.floor((Date.now()-new Date(user.createdAt).getTime())/86400000);
+                if(days < 1) return "New";
+                if(days < 31) return `${days}d`;
+                return `${Math.floor(days/30)} mo`;
+              })(),"Member"],
+            ].map(([v,l])=>(
               <Glass key={l} style={{padding:"12px 6px",textAlign:"center"}}>
                 <div style={{fontWeight:900,fontSize:18,color:R.accent}}>{v}</div>
                 <div style={{fontSize:11,color:R.muted,marginTop:2}}>{l}</div>
@@ -1609,7 +1622,7 @@ const ProfilePage = ({user,onLogout}) => {
           </div>
           <Glass style={{padding:16,marginBottom:14}}>
             <div style={{fontWeight:700,fontSize:13,color:R.text,marginBottom:12}}>ACCOUNT DETAILS</div>
-            {[["Name",user.name],["Phone",user.phone||"Not set"],["Email",user.email||"Not set"],["Role",ROLES[user.role]?.name||user.role],["Location",user.location||"Not set"],["Auth Method",user.auth],["Linked Account",user.linked?"Google Linked ✓":"None"]].map(([l,v])=>(
+            {[["Name",user.name],["Phone",user.phone||"Not set"],["Email",user.email||"Not set"],["Role",ROLES[user.role]?.name||user.role],["Location",user.location||"Not set"],["Auth Method",user.authProvider||"phone"],["Linked Account",user.googleId?"Google Linked ✓":"None"]].map(([l,v])=>(
               <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #F0F0F0",fontSize:13}}>
                 <span style={{color:R.muted}}>{l}</span>
                 <span style={{fontWeight:600,color:R.text}}>{v}</span>
