@@ -1,0 +1,279 @@
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #111827;
+  background: #f3f4f6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  min-height: 100%;
+  height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  background: #f3f4f6;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+.review-shell {
+  padding: 24px;
+}
+
+.review-card {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(17, 24, 39, 0.08);
+}
+
+.eyebrow {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #0f766e;
+  margin: 0 0 8px;
+}
+
+h1, h2 {
+  margin-top: 0;
+  color: #111827;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.stat-box {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.stat-box span {
+  display: block;
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.stat-box strong {
+  font-size: 1.7rem;
+  color: #111827;
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0 12px;
+}
+
+.search-input,
+.sort-select {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: white;
+  font-size: 0.95rem;
+}
+
+.search-input {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.sort-select {
+  min-width: 180px;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 22px;
+}
+
+.filter-btn {
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  color: #374151;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.filter-btn.active {
+  background: #0f766e;
+  color: white;
+  border-color: #0f766e;
+}
+
+.chart-panel {
+  margin-top: 24px;
+  margin-bottom: 12px;
+  padding: 18px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.distribution-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.distribution-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 30px;
+  align-items: center;
+  gap: 12px;
+}
+
+.distribution-bar-wrap {
+  background: #e5e7eb;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.distribution-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.small-btn {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: white;
+  color: #374151;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-small {
+  background: #0f766e;
+  color: white;
+  border-color: #0f766e;
+}
+
+.danger-btn {
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.review-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.review-form input,
+.review-form select,
+.review-form textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 1rem;
+  background: white;
+}
+
+.primary-btn {
+  border: none;
+  border-radius: 10px;
+  background: #0f766e;
+  color: white;
+  padding: 12px 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.form-message {
+  margin-top: 8px;
+  color: #0f766e;
+  font-weight: 600;
+}
+
+.top-nav {
+  display: flex;
+  gap: 16px;
+  padding: 18px 24px;
+  background: #111827;
+}
+
+.top-nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.reviews-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.reviews-table th,
+.reviews-table td {
+  text-align: left;
+  padding: 12px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.reviews-table th {
+  color: #374151;
+  background: #f9fafb;
+}
+
+.review-item {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.review-item p {
+  margin: 8px 0;
+}
+
+.spotlight {
+  margin: 24px 0;
+}

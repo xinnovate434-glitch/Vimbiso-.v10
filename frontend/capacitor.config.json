@@ -1,6 +1,6 @@
 {
-  "appId": "com.creatvate.vimbiso",
-  "appName": "Vimbiso AgriLink",
+  "appId": "com.vimbiso.reviews",
+  "appName": "Vimbiso Reviews",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {

@@ -1,0 +1,23 @@
+{
+	"appId": "com.vimbiso.reviews",
+	"appName": "Vimbiso Reviews",
+	"webDir": "dist",
+	"bundledWebRuntime": false,
+	"server": {
+		"androidScheme": "https",
+		"cleartext": true
+	},
+	"android": {},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 2500,
+			"backgroundColor": "#064E3B",
+			"showSpinner": false,
+			"androidScaleType": "CENTER_CROP"
+		},
+		"StatusBar": {
+			"style": "DARK",
+			"backgroundColor": "#064E3B"
+		}
+	}
+}
