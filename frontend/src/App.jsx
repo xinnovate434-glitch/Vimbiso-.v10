@@ -201,13 +201,47 @@ const NotifBanner = ({notif,dismiss}) => {
 };
 
 // Escrow modal — uses uploaded NFC image as header bg
-const EscrowModal = ({item,role,onClose}) => {
-  const [step,setStep]=useState(0);
+const EscrowModal = ({item,role,onClose,existingOrder}) => {
+  const statusStep={pending:1,accepted:2,in_transit:3,delivered:4,completed:5};
+  const [step,setStep]=useState(existingOrder?(statusStep[existingOrder.status]??2):0);
   const [loading,setLoading]=useState(false);
+  const [order,setOrder]=useState(existingOrder||null);
+  const [err,setErr]=useState(null);
   const R=ROLES[role]||ROLES.buyer;
-  const advance=()=>{setLoading(true);setTimeout(()=>{setLoading(false);setStep(s=>s+1);},1000);};
-  const total=item?(+((item.price||1.2)*(item.qty||5)+1.80+(item.price||1.2)*(item.qty||5)*.03).toFixed(2)):7.98;
+  const qty=order?.quantity||item?.qty||item?.quantity||1;
+  const total=order?order.total:(item?(+((item.price||1.2)*qty+1.80+(item.price||1.2)*qty*.03).toFixed(2)):7.98);
   const steps=["Review","Payment","Secured","Dispatched","Confirm","Released"];
+
+  const placeOrder = async (paymentMethod) => {
+    setLoading(true); setErr(null);
+    try{
+      const json = await api("/orders",{method:"POST",body:JSON.stringify({
+        listingId:item._id, quantity:qty, paymentMethod,
+      })});
+      setOrder(json.data.order);
+      setLoading(false); setStep(2);
+    }catch(e){
+      setLoading(false); setErr(e.message||"Could not place order.");
+    }
+  };
+
+  const markDelivered = async () => {
+    if(!order) return setStep(4);
+    setLoading(true); setErr(null);
+    try{
+      await api(`/orders/${order._id}/status`,{method:"PATCH",body:JSON.stringify({status:"delivered"})});
+      setLoading(false); setStep(4);
+    }catch(e){ setLoading(false); setErr(e.message||"Could not update order."); }
+  };
+
+  const releasePayment = async () => {
+    if(!order) return setStep(5);
+    setLoading(true); setErr(null);
+    try{
+      await api(`/orders/${order._id}/confirm`,{method:"POST"});
+      setLoading(false); setStep(5);
+    }catch(e){ setLoading(false); setErr(e.message||"Could not release payment."); }
+  };
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:800,display:"flex",alignItems:"flex-end",backdropFilter:"blur(8px)"}}>
       <div style={{background:"#fff",width:"100%",maxWidth:480,margin:"0 auto",borderRadius:"28px 28px 0 0",maxHeight:"90vh",overflowY:"auto",animation:"slideUp .35s ease"}}>
@@ -230,10 +264,11 @@ const EscrowModal = ({item,role,onClose}) => {
               </div>
             ))}
           </div>
+          {err&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"10px 14px",marginBottom:12,fontSize:12,color:"#991B1B"}}>⚠ {err}</div>}
           {step===0&&<>
             <div style={{background:"#F8FAFC",borderRadius:14,padding:14,marginBottom:14}}>
-              <div style={{fontWeight:700,fontSize:15,marginBottom:8}}>{item?.product||"Order"} × {item?.qty||5} {item?.unit||"kg"}</div>
-              {[["Subtotal",money((item?.price||1.2)*(item?.qty||5))],["Fee (3%)",money((item?.price||1.2)*(item?.qty||5)*.03)],["Delivery","$1.80"],["TOTAL",money(total)]].map(([l,v],i)=>(
+              <div style={{fontWeight:700,fontSize:15,marginBottom:8}}>{item?.product||"Order"} × {qty} {item?.unit||"kg"}</div>
+              {[["Subtotal",money((item?.price||1.2)*qty)],["Fee (3%)",money((item?.price||1.2)*qty*.03)],["Delivery","$1.80"],["TOTAL",money(total)]].map(([l,v],i)=>(
                 <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",fontSize:13,
                   fontWeight:i===3?800:400,borderTop:i===3?"1px solid #E5E7EB":"none",marginTop:i===3?6:0}}>
                   <span style={{color:i===3?"#0F172A":"#6B7280"}}>{l}</span>
@@ -242,18 +277,18 @@ const EscrowModal = ({item,role,onClose}) => {
               ))}
             </div>
             <div style={{background:"#ECFDF5",borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:12,color:"#065F46",border:"1px solid #A7F3D0"}}>🔒 Payment held in escrow until you confirm delivery</div>
-            <button onClick={advance} disabled={loading} style={{width:"100%",padding:15,borderRadius:14,background:R.grad,color:"#fff",fontWeight:800,fontSize:15,border:"none",cursor:"pointer"}}>{loading?"…":"PROCEED TO PAYMENT →"}</button>
+            <button onClick={()=>setStep(1)} disabled={loading} style={{width:"100%",padding:15,borderRadius:14,background:R.grad,color:"#fff",fontWeight:800,fontSize:15,border:"none",cursor:"pointer"}}>{loading?"…":"PROCEED TO PAYMENT →"}</button>
           </>}
           {step===1&&<>
             <div style={{fontWeight:700,marginBottom:12}}>Choose payment method</div>
             {[{i:"📱",n:"EcoCash",d:"Instant · No fees"},{i:"💳",n:"InnBucks",d:"Linked account"},{i:"🏦",n:"OneMoney",d:"Bank transfer"}].map(m=>(
-              <div key={m.n} onClick={advance} style={{padding:14,borderRadius:14,border:"1.5px solid #E5E7EB",marginBottom:10,cursor:"pointer",display:"flex",gap:12,alignItems:"center"}}>
+              <div key={m.n} onClick={()=>!loading&&placeOrder(m.n)} style={{padding:14,borderRadius:14,border:"1.5px solid #E5E7EB",marginBottom:10,cursor:loading?"default":"pointer",display:"flex",gap:12,alignItems:"center",opacity:loading?.6:1}}>
                 <span style={{fontSize:26}}>{m.i}</span>
                 <div style={{flex:1}}><div style={{fontWeight:700}}>{m.n}</div><div style={{fontSize:12,color:"#6B7280"}}>{m.d}</div></div>
                 <div style={{fontWeight:800,color:R.accent}}>{money(total)}</div>
               </div>
             ))}
-            {loading&&<div style={{textAlign:"center",color:R.accent,fontWeight:700,padding:12}}>⏳ Processing…</div>}
+            {loading&&<div style={{textAlign:"center",color:R.accent,fontWeight:700,padding:12}}>⏳ Placing order…</div>}
           </>}
           {step===2&&<div style={{textAlign:"center",padding:"24px 0"}}>
             <div style={{fontSize:54,animation:"pulse 2s infinite",marginBottom:12}}>🔒</div>
@@ -261,16 +296,16 @@ const EscrowModal = ({item,role,onClose}) => {
             <div style={{fontSize:13,color:"#6B7280",marginBottom:20}}>{money(total)} safely held. Releases on delivery confirmation.</div>
             <div style={{background:"#F0FDF4",borderRadius:14,padding:12,marginBottom:20,border:"1px solid #D1FAE5"}}>
               <div style={{fontSize:11,color:"#9CA3AF"}}>ESCROW REF</div>
-              <div style={{fontWeight:900,fontSize:18,color:"#065F46"}}>ESC-{uid()}</div>
+              <div style={{fontWeight:900,fontSize:18,color:"#065F46"}}>{order?.escrowRef||"—"}</div>
             </div>
-            <button onClick={advance} disabled={loading} style={{width:"100%",padding:14,borderRadius:14,background:R.grad,color:"#fff",fontWeight:800,border:"none",cursor:"pointer"}}>{loading?"Notifying…":"ASSIGN RIDER →"}</button>
+            <button onClick={()=>setStep(3)} disabled={loading} style={{width:"100%",padding:14,borderRadius:14,background:R.grad,color:"#fff",fontWeight:800,border:"none",cursor:"pointer"}}>{loading?"Notifying…":"ASSIGN RIDER →"}</button>
           </div>}
           {step===3&&<div style={{textAlign:"center",padding:"24px 0"}}>
             <div style={{fontSize:54,marginBottom:12}}>🛵</div>
             <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:700,marginBottom:8}}>Rider Dispatched!</div>
             <div style={{fontSize:13,color:"#6B7280",marginBottom:16}}>ETA: ~18 minutes · Live tracking active</div>
             <div style={{background:"#FEF3C7",borderRadius:14,padding:12,marginBottom:16,fontSize:12,color:"#92400E",border:"1px solid #FCD34D"}}>⚠ Only release payment after physically receiving goods.</div>
-            <button onClick={advance} disabled={loading} style={{width:"100%",padding:14,borderRadius:14,background:R.grad,color:"#fff",fontWeight:800,border:"none",cursor:"pointer"}}>{loading?"…":"I RECEIVED MY ORDER ✓"}</button>
+            <button onClick={markDelivered} disabled={loading} style={{width:"100%",padding:14,borderRadius:14,background:R.grad,color:"#fff",fontWeight:800,border:"none",cursor:"pointer"}}>{loading?"…":"I RECEIVED MY ORDER ✓"}</button>
           </div>}
           {step===4&&<div style={{textAlign:"center",padding:"24px 0"}}>
             <div style={{fontSize:54,marginBottom:12}}>📍</div>
@@ -278,7 +313,7 @@ const EscrowModal = ({item,role,onClose}) => {
             <div style={{fontSize:13,color:"#6B7280",marginBottom:20}}>Confirming releases {money(total)} to the seller.</div>
             <div style={{display:"flex",gap:10}}>
               <button style={{flex:1,padding:13,borderRadius:14,background:"#FEE2E2",color:"#991B1B",border:"1px solid #FECACA",fontWeight:700,cursor:"pointer"}}>⚠ Dispute</button>
-              <button onClick={advance} disabled={loading} style={{flex:2,padding:13,borderRadius:14,background:R.grad,color:"#fff",fontWeight:800,border:"none",cursor:"pointer"}}>{loading?"Releasing…":"✅ CONFIRM & RELEASE"}</button>
+              <button onClick={releasePayment} disabled={loading} style={{flex:2,padding:13,borderRadius:14,background:R.grad,color:"#fff",fontWeight:800,border:"none",cursor:"pointer"}}>{loading?"Releasing…":"✅ CONFIRM & RELEASE"}</button>
             </div>
           </div>}
           {step===5&&<div style={{textAlign:"center",padding:"24px 0"}}>
@@ -639,16 +674,17 @@ const BuyerDash = ({user,tab,setTab,push}) => {
           <div style={{fontWeight:800,fontSize:12,color:"#fff",letterSpacing:.5}}>YOUR ORDERS</div>
           <span onClick={()=>setTab("orders")} style={{fontSize:12,color:"#34D399",fontWeight:700,cursor:"pointer",background:"rgba(52,211,153,.12)",borderRadius:10,padding:"3px 10px"}}>All →</span>
         </div>
-        {DB.orders.slice(0,2).map(o=>(
-          <div key={o.id} style={{marginBottom:10,padding:14,background:"#101B17",borderRadius:16,border:"1px solid rgba(255,255,255,.06)"}}>
+        {!orders.length && <div style={{fontSize:12,color:"rgba(255,255,255,.4)",padding:"8px 0"}}>No orders yet.</div>}
+        {orders.slice(0,2).map(o=>(
+          <div key={o._id} style={{marginBottom:10,padding:14,background:"#101B17",borderRadius:16,border:"1px solid rgba(255,255,255,.06)"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div>
                 <div style={{fontWeight:700,fontSize:14,color:"#fff"}}>{o.product}</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginTop:1}}>{o.qty}kg · {money(o.total)} · {o.agent||"Awaiting rider"}</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginTop:1}}>{o.quantity}kg · {money(o.total)} · {o.deliveryAgent?.name||"Awaiting rider"}</div>
               </div>
-              <Pill bg={statusColor[o.status]+"22"} color={statusColor[o.status]}>{o.status.replace("_"," ")}</Pill>
+              <Pill bg={(statusColor[o.status]||"#6B7280")+"22"} color={statusColor[o.status]||"#6B7280"}>{o.status.replace("_"," ")}</Pill>
             </div>
-            {o.status==="in_transit"&&<button onClick={()=>setEscrow(o)} style={{marginTop:10,width:"100%",padding:"9px",borderRadius:10,background:"linear-gradient(135deg,#22C55E,#16A34A)",color:"#fff",fontWeight:700,border:"none",cursor:"pointer",fontSize:12}}>✅ Confirm & Release Payment</button>}
+            {(o.status==="in_transit"||o.status==="delivered")&&<button onClick={()=>setEscrow(o)} style={{marginTop:10,width:"100%",padding:"9px",borderRadius:10,background:"linear-gradient(135deg,#22C55E,#16A34A)",color:"#fff",fontWeight:700,border:"none",cursor:"pointer",fontSize:12}}>✅ Confirm & Release Payment</button>}
           </div>
         ))}
 
@@ -670,7 +706,7 @@ const BuyerDash = ({user,tab,setTab,push}) => {
           </div>
         ))}
       </div>
-      {escrow&&<EscrowModal item={escrow} role="buyer" onClose={()=>setEscrow(null)}/>}
+      {escrow&&<EscrowModal item={escrow} role="buyer" existingOrder={escrow?.status?escrow:null} onClose={()=>{setEscrow(null);loadOrders();}}/>}
       <div style={{height:20}}/>
     </TabWrap>
   );
@@ -698,7 +734,7 @@ const BuyerDash = ({user,tab,setTab,push}) => {
           </Glass>
         ))}
       </div>
-      {escrow&&<EscrowModal item={escrow} role="buyer" onClose={()=>setEscrow(null)}/>}
+      {escrow&&<EscrowModal item={escrow} role="buyer" existingOrder={escrow?.status?escrow:null} onClose={()=>{setEscrow(null);loadOrders();}}/>}
     </TabWrap>
   );
 
@@ -708,17 +744,20 @@ const BuyerDash = ({user,tab,setTab,push}) => {
         <div style={{fontFamily:"'Fraunces',serif",fontSize:24,fontWeight:700,color:"#fff"}}>My Orders</div>
       </div>
       <div style={{padding:"14px 16px"}}>
-        {DB.orders.map(o=>(
-          <Glass key={o.id} style={{marginBottom:12,padding:14}}>
+        {!orders.length && <div style={{fontSize:12,color:R.muted,padding:"10px 0"}}>No orders yet.</div>}
+        {orders.map(o=>(
+          <Glass key={o._id} style={{marginBottom:12,padding:14}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
               <div style={{fontWeight:700,fontSize:15}}>{o.product}</div>
-              <Pill bg={statusColor[o.status]+"22"} color={statusColor[o.status]}>{o.status.replace("_"," ")}</Pill>
+              <Pill bg={(statusColor[o.status]||"#6B7280")+"22"} color={statusColor[o.status]||"#6B7280"}>{o.status.replace("_"," ")}</Pill>
             </div>
-            <div style={{fontSize:12,color:R.muted}}>{o.id} · {o.qty}kg · {money(o.total)}</div>
-            {o.agent&&<div style={{fontSize:12,color:R.accent,marginTop:4,fontWeight:600}}>🛵 {o.agent}</div>}
+            <div style={{fontSize:12,color:R.muted}}>{o.escrowRef||o._id.slice(-6)} · {o.quantity}kg · {money(o.total)}</div>
+            {o.deliveryAgent?.name&&<div style={{fontSize:12,color:R.accent,marginTop:4,fontWeight:600}}>🛵 {o.deliveryAgent.name}</div>}
+            {(o.status==="in_transit"||o.status==="delivered")&&<button onClick={()=>setEscrow(o)} style={{marginTop:10,width:"100%",padding:"9px",borderRadius:10,background:R.grad,color:"#fff",fontWeight:700,border:"none",cursor:"pointer",fontSize:12}}>✅ Confirm & Release Payment</button>}
           </Glass>
         ))}
       </div>
+      {escrow&&<EscrowModal item={escrow} role="buyer" existingOrder={escrow?.status?escrow:null} onClose={()=>{setEscrow(null);loadOrders();}}/>}
     </TabWrap>
   );
 
@@ -889,16 +928,17 @@ const VendorDash = ({user,tab,setTab,push}) => {
         <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:700,color:"#fff"}}>Incoming Orders</div>
       </div>
       <div style={{padding:16}}>
-        {DB.orders.map(o=>(
-          <Glass key={o.id} style={{marginBottom:12,padding:14}}>
+        {!orders.length && <div style={{fontSize:12,color:R.muted,padding:"10px 0"}}>No orders yet.</div>}
+        {orders.map(o=>(
+          <Glass key={o._id} style={{marginBottom:12,padding:14}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
               <div style={{fontWeight:700,fontSize:15}}>{o.product}</div>
               <Pill bg="#FEF3C7" color="#92400E">{o.status.replace("_"," ")}</Pill>
             </div>
-            <div style={{fontSize:12,color:R.muted}}>{o.qty}kg · {money(o.total)} · {o.id}</div>
+            <div style={{fontSize:12,color:R.muted}}>{o.quantity}kg · {money(o.total)} · {o.buyer?.name||"Buyer"}</div>
             {o.status==="pending"&&<div style={{display:"flex",gap:8,marginTop:10}}>
-              <button style={{flex:1,padding:"9px",borderRadius:10,background:R.grad,color:"#fff",fontWeight:700,border:"none",cursor:"pointer",fontSize:12}}>✅ Accept</button>
-              <button style={{flex:1,padding:"9px",borderRadius:10,background:"#FEE2E2",color:"#991B1B",fontWeight:700,border:"none",cursor:"pointer",fontSize:12}}>✗ Decline</button>
+              <button onClick={()=>respondOrder(o._id,"accepted")} style={{flex:1,padding:"9px",borderRadius:10,background:R.grad,color:"#fff",fontWeight:700,border:"none",cursor:"pointer",fontSize:12}}>✅ Accept</button>
+              <button onClick={()=>respondOrder(o._id,"rejected")} style={{flex:1,padding:"9px",borderRadius:10,background:"#FEE2E2",color:"#991B1B",fontWeight:700,border:"none",cursor:"pointer",fontSize:12}}>✗ Decline</button>
             </div>}
           </Glass>
         ))}
@@ -1460,21 +1500,35 @@ const AgentDash = ({user,tab,push}) => {
 const AdminDash = ({user,tab,push}) => {
   const R=ROLES.admin;
   const [wForm,setWForm]=useState({name:"",phone:"",role:"buyer"});
-  const [wList,setWList]=useState(DB.waitlist);
+  const [wList,setWList]=useState([]);
   const [wErr,setWErr]=useState({});
   const [saved,setSaved]=useState(false);
+  const [stats,setStats]=useState(null);
+  const [users,setUsers]=useState([]);
+  const [listings,setListings]=useState([]);
   const fmtD=ts=>new Date(ts).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
 
-  const submitW=()=>{
+  useEffect(()=>{
+    if(tab==="overview") api("/admin/stats").then(j=>setStats(j.data)).catch(()=>{});
+    if(tab==="users") api("/admin/users").then(j=>setUsers(j.data.users||[])).catch(()=>{});
+    if(tab==="listings") api("/listings?limit=50").then(j=>setListings(j.data||[])).catch(()=>{});
+    if(tab==="waitlist") api("/waitlist").then(j=>setWList(j.data||[])).catch(()=>{});
+  },[tab]);
+
+  const submitW=async()=>{
     const er={};
     if(!wForm.name.trim())er.name="Name required";
     if(!wForm.phone||wForm.phone.replace(/\D/g,"").length<9)er.phone="Valid phone required";
     if(Object.keys(er).length){setWErr(er);return;}
-    const entry={id:uid(),name:wForm.name,phone:wForm.phone,role:wForm.role,ts:Date.now()};
-    DB.waitlist.push(entry); setWList([...DB.waitlist]);
-    setWForm({name:"",phone:"",role:"buyer"}); setWErr({}); setSaved(true);
-    setTimeout(()=>setSaved(false),3000);
-    push({icon:"💾",title:"Saved to Database",body:`${wForm.name} added to waitlist`});
+    try{
+      const json=await api("/waitlist",{method:"POST",body:JSON.stringify(wForm)});
+      setWList(l=>[json.data.entry,...l]);
+      setWForm({name:"",phone:"",role:"buyer"}); setWErr({}); setSaved(true);
+      setTimeout(()=>setSaved(false),3000);
+      push({icon:"💾",title:"Saved to Database",body:`${json.data.entry.name} added to waitlist`});
+    }catch(e){
+      push({icon:"⚠️",title:"Could not save",body:e.message||"Try again."});
+    }
   };
 
   if(tab==="overview") return (
@@ -1485,7 +1539,7 @@ const AdminDash = ({user,tab,push}) => {
       </div>
       <div style={{padding:14}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-          {[{v:DB.users.length,l:"Total Users",i:"👥",c:"#DC2626"},{v:DB.listings.length,l:"Listings",i:"📦",c:"#7C2D12"},{v:DB.orders.length,l:"Orders",i:"🧾",c:"#9F1239"},{v:DB.waitlist.length,l:"Waitlist",i:"📋",c:"#B91C1C"}].map(x=>(
+          {[{v:stats?.users??"–",l:"Total Users",i:"👥",c:"#DC2626"},{v:stats?.listings??"–",l:"Listings",i:"📦",c:"#7C2D12"},{v:stats?.orders??"–",l:"Orders",i:"🧾",c:"#9F1239"},{v:stats?.waitlist??"–",l:"Waitlist",i:"📋",c:"#B91C1C"}].map(x=>(
             <Glass key={x.l} style={{padding:14,textAlign:"center"}}>
               <div style={{fontSize:22,marginBottom:3}}>{x.i}</div>
               <div style={{fontWeight:900,fontSize:24,color:x.c}}>{x.v}</div>
@@ -1496,7 +1550,7 @@ const AdminDash = ({user,tab,push}) => {
         <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:14}}>
           {["buyer","vendor","farmer","delivery","agent"].map(r=>{
             const icons={buyer:"🛍",vendor:"🏪",farmer:"🌾",delivery:"🛵",agent:"🤝"};
-            const ct=DB.users.filter(u=>u.role===r).length;
+            const ct=stats?.byRole?.find(x=>x._id===r)?.count ?? 0;
             return (
               <Glass key={r} style={{padding:"10px 4px",textAlign:"center"}}>
                 <div style={{fontSize:18,marginBottom:2}}>{icons[r]}</div>
@@ -1508,7 +1562,7 @@ const AdminDash = ({user,tab,push}) => {
         </div>
         <Glass style={{padding:14}}>
           <div style={{fontWeight:700,fontSize:12,color:R.text,marginBottom:10}}>DAILY ACTIVITY</div>
-          {[{d:"Transactions",v:14,bar:70},{d:"Revenue",v:"$124.80",bar:82},{d:"New Users",v:3,bar:30},{d:"Listings Posted",v:7,bar:55}].map(x=>(
+          {[{d:"Orders Today",v:stats?.todayOrders??0,bar:Math.min(100,(stats?.todayOrders??0)*10)},{d:"Total Revenue",v:money(stats?.revenue??0),bar:Math.min(100,(stats?.revenue??0)/5)},{d:"Total Orders",v:stats?.orders??0,bar:Math.min(100,(stats?.orders??0)*5)},{d:"Total Listings",v:stats?.listings??0,bar:Math.min(100,(stats?.listings??0)*5)}].map(x=>(
             <div key={x.d} style={{marginBottom:10}}>
               <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
                 <span style={{color:R.muted}}>{x.d}</span>
@@ -1526,11 +1580,12 @@ const AdminDash = ({user,tab,push}) => {
     <TabWrap bg={BG.admin}>
       <div style={{background:"rgba(27,0,0,.96)",padding:"24px 18px 18px"}}>
         <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:700,color:"#fff"}}>All Users</div>
-        <div style={{color:"rgba(255,255,255,.5)",fontSize:12}}>{DB.users.length} registered accounts</div>
+        <div style={{color:"rgba(255,255,255,.5)",fontSize:12}}>{users.length} registered accounts</div>
       </div>
       <div style={{padding:16}}>
-        {DB.users.map(u=>(
-          <Glass key={u.id} style={{marginBottom:10,padding:14}}>
+        {!users.length && <div style={{fontSize:12,color:R.muted}}>Loading…</div>}
+        {users.map(u=>(
+          <Glass key={u._id} style={{marginBottom:10,padding:14}}>
             <div style={{display:"flex",gap:10,alignItems:"center"}}>
               <div style={{width:40,height:40,borderRadius:12,background:`${R.accent}20`,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,color:R.accent,fontSize:18}}>{u.name[0]}</div>
               <div style={{flex:1}}>
@@ -1538,13 +1593,13 @@ const AdminDash = ({user,tab,push}) => {
                 <div style={{fontSize:12,color:R.muted}}>{u.phone||u.email} · {u.location}</div>
                 <div style={{display:"flex",gap:5,marginTop:3}}>
                   <Pill bg={`${R.accent}15`} color={R.accent}>{u.role}</Pill>
-                  <Pill bg="#F0F0F0" color="#666">{u.auth}</Pill>
-                  {u.linked&&<Pill bg="#FEF3C7" color="#92400E">Linked</Pill>}
+                  <Pill bg="#F0F0F0" color="#666">{u.authProvider||"phone"}</Pill>
+                  {u.googleId&&<Pill bg="#FEF3C7" color="#92400E">Linked</Pill>}
                 </div>
               </div>
               <div style={{textAlign:"right",fontSize:11,color:R.muted}}>
-                <div style={{fontWeight:700,color:R.primary}}>T:{u.trust}</div>
-                <div style={{fontSize:10}}>{u.id}</div>
+                <div style={{fontWeight:700,color:R.primary}}>T:{u.trustScore ?? 50}</div>
+                <div style={{fontSize:9}}>{u._id.slice(-6)}</div>
               </div>
             </div>
           </Glass>
@@ -1557,18 +1612,19 @@ const AdminDash = ({user,tab,push}) => {
     <TabWrap bg={BG.analytics}>
       <div style={{background:"rgba(27,0,0,.96)",padding:"24px 18px 18px"}}>
         <div style={{fontFamily:"'Fraunces',serif",fontSize:22,fontWeight:700,color:"#fff"}}>All Listings</div>
-        <div style={{color:"rgba(255,255,255,.5)",fontSize:12}}>{DB.listings.length} active listings</div>
+        <div style={{color:"rgba(255,255,255,.5)",fontSize:12}}>{listings.length} active listings</div>
       </div>
       <div style={{padding:16}}>
-        {DB.listings.map(l=>(
-          <Glass key={l.id} style={{marginBottom:10,padding:0,overflow:"hidden"}}>
+        {!listings.length && <div style={{fontSize:12,color:R.muted}}>Loading…</div>}
+        {listings.map(l=>(
+          <Glass key={l._id} style={{marginBottom:10,padding:0,overflow:"hidden"}}>
             <div style={{display:"flex"}}>
-              <img src={l.img} style={{width:70,height:70,objectFit:"cover",flexShrink:0}} onError={e=>e.target.style.display="none"}/>
+              <img src={l.images?.[0]} style={{width:70,height:70,objectFit:"cover",flexShrink:0}} onError={e=>e.target.style.display="none"}/>
               <div style={{padding:"10px 12px",flex:1}}>
                 <div style={{fontWeight:700,color:R.text}}>{l.product}</div>
-                <div style={{fontSize:11,color:R.muted}}>{l.cat} · 📍 {l.loc}</div>
-                <div style={{fontWeight:700,color:R.primary,fontSize:14}}>{money(l.price)}/{l.unit} · {l.qty}{l.unit}</div>
-                <div style={{fontSize:10,color:R.muted}}>Vendor: {l.vid}</div>
+                <div style={{fontSize:11,color:R.muted}}>{l.category} · 📍 {l.location}</div>
+                <div style={{fontWeight:700,color:R.primary,fontSize:14}}>{money(l.price)}/{l.unit} · {l.quantity}{l.unit}</div>
+                <div style={{fontSize:10,color:R.muted}}>Vendor: {l.vendor?.name||l.vendor}</div>
               </div>
             </div>
           </Glass>
