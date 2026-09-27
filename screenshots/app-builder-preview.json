@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Vimbiso Network",
+      "hasCanvas": false,
+      "bodyTextLen": 106,
+      "bodyTextHash": "9b92c93bf01702aab7619253e1309aec5dd3d36f119efdc860a861ad0845df83",
+      "bodyTextPrefix": "VIMBISO NETWORK Trade in real time. 0 TRADES 0 TRADERS 0% COMPLE",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Vimbiso Network",
+      "hasCanvas": false,
+      "bodyTextLen": 106,
+      "bodyTextHash": "9b92c93bf01702aab7619253e1309aec5dd3d36f119efdc860a861ad0845df83",
+      "bodyTextPrefix": "VIMBISO NETWORK Trade in real time. 0 TRADES 0 TRADERS 0% COMPLE",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
